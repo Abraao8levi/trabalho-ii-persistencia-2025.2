@@ -1,0 +1,66 @@
+erDiagram
+    Usuario {
+        int id_user PK
+        string username
+        string email
+        string password
+        datetime createdAt
+    }
+
+    Filme {
+        int id_movie PK
+        string titulo
+        string sinopse
+        int ano_lancamento
+        int duracao
+        string classificacao_indicativa
+        string diretor
+    }
+
+    Avaliacao {
+        int id_review PK
+        int nota
+        string conteudo
+        int id_user FK
+        int id_movie FK
+    }
+
+    ListaDesejos {
+        int id_watchlist PK
+        datetime adicionado_em
+        string notas
+        int id_user FK
+        int id_movie FK
+    }
+
+    Genero {
+        int id_genre PK
+        string nome
+        string descricao
+    }
+
+    Ator {
+        int id_actor PK
+        string nome_ator
+        date data_nascimento
+        string nacionalidade
+        string biografia
+    }
+
+    Filme_Genero {
+        int id_filme FK
+        int id_genero FK
+    }
+
+    Filme_Ator {
+        int id_filme FK
+        int id_ator FK
+        string personagem
+    }
+
+    Usuario ||--o{ Avaliacao : "faz"
+    Filme ||--o{ Avaliacao : "recebe"
+    Usuario ||--o{ ListaDesejos : "possui"
+    Filme ||--o{ ListaDesejos : "está_na_lista"
+    Filme }o--o{ Genero : "possui_generos"
+    Filme }o--o{ Ator : "tem_atores"

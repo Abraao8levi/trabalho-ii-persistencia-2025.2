@@ -1,38 +1,43 @@
 import os
+import sys
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
-from alembic import context
 from sqlmodel import SQLModel
-from dotenv import load_dotenv
 
-# Importa TODOS os modelos do projeto
-# (seu __init__.py deve importar todos os models)
-from models import *
+import models  # noqa: F401 # usado para registrar os modelos no metadata
+from alembic import context
 
-# Carrega variáveis de ambiente
-load_dotenv()
+# Garantir que o diretório do projeto esteja no sys.path para importar o pacote `models`
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-# Alembic Config
+# this is the Alembic Config object, which provides
+# access to the values within the .ini file in use.
 config = context.config
 
-# Define URL do Supabase
-DATABASE_URL = os.getenv("DATABASE_URL")
-if DATABASE_URL:
-    config.set_main_option("sqlalchemy.url", DATABASE_URL)
-
-
-# Logging
+# Interpret the config file for Python logging.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Metadata do SQLModel (OBRIGATÓRIO)
+# metadata para autogenerate (SQLModel)
 target_metadata = SQLModel.metadata
 
+# helper: prefer variável de ambiente DATABASE_URL se fornecida
+def _get_database_url() -> str | None:
+    # Prioridade: DATABASE_URL do ambiente, depois alembic.ini
+    database_url = os.environ.get("DATABASE_URL")
+    if database_url:
+        return database_url
+    return config.get_main_option("sqlalchemy.url")
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
-    url = config.get_main_option("sqlalchemy.url")
+    url = _get_database_url()
+    if url is None:
+        raise ValueError("Database URL não encontrada. Configure DATABASE_URL ou sqlalchemy.url no alembic.ini")
+    
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -43,24 +48,37 @@ def run_migrations_offline() -> None:
     with context.begin_transaction():
         context.run_migrations()
 
-
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
+    # Se DATABASE_URL estiver definida, sobrescreve a configuração
+    database_url = _get_database_url()
+    if database_url:
+        configuration = config.get_section(config.config_ini_section, {})
+        configuration['sqlalchemy.url'] = database_url
+    else:
+        configuration = config.get_section(config.config_ini_section, {})
+    
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
     with connectable.connect() as connection:
+        # Detecta se é SQLite para habilitar render_as_batch
+        dialect_name = connection.dialect.name
+        is_sqlite = dialect_name == "sqlite"
+        
         context.configure(
-            connection=connection, 
-            target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            render_as_batch=is_sqlite,
+            compare_type=True,  # Detecta mudanças nos tipos de colunas
+            compare_server_default=True,  # Detecta mudanças em defaults
         )
 
         with context.begin_transaction():
             context.run_migrations()
-
 
 if context.is_offline_mode():
     run_migrations_offline()
