@@ -4,6 +4,7 @@ from typing import List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .movie import Movie
+    from .movie_actor import MovieActor
 
 class Actor(SQLModel, table=True):
     id_actor: Optional[int] = Field(default=None, primary_key=True)

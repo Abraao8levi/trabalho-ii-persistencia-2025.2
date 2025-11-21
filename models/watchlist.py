@@ -12,5 +12,5 @@ class Watchlist(SQLModel, table=True):
     id_user: int = Field(foreign_key="user.id_user", nullable=False)
     id_movie: int = Field(foreign_key="movie.id_movie", nullable=False)
 
-    user: "User" = Relationship(back_populates="watchlists")
-    movie: "Movie" = Relationship(back_populates="watchlists")
+    user: "User" = Relationship(back_populates="watchlist")
+    movie: "Movie" = Relationship(back_populates="watchlist")
