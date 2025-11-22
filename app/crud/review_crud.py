@@ -1,10 +1,11 @@
-from sqlmodel import Session, select, func, desc, asc
-from typing import List, Optional
-from ..models.review import Review
-from ..models.movie import Movie
-from ..models.user import User
-from .exceptions import NotFoundException, DuplicateEntryException, ValidationException
 import logging
+from typing import List, Optional
+
+from sqlmodel import Session, asc, desc, func, select
+
+from ...models.review import Review
+from .exceptions import (DuplicateEntryException, NotFoundException,
+                         ValidationException)
 
 logger = logging.getLogger(__name__)
 
