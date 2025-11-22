@@ -1,10 +1,10 @@
-from sqlmodel import Session, select, func, desc, asc
-from typing import List, Optional
-from ..models.watchlist import Watchlist
-from ..models.movie import Movie
-from ..models.user import User
-from .exceptions import NotFoundException, DuplicateEntryException
 import logging
+from typing import List, Optional
+
+from sqlmodel import Session, asc, desc, func, select
+
+from ...models.watchlist import Watchlist
+from .exceptions import DuplicateEntryException, NotFoundException
 
 logger = logging.getLogger(__name__)
 
