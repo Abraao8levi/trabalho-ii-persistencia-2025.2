@@ -18,11 +18,17 @@ class Movie(SQLModel, table=True):
     synopsis: Optional[str] = Field(default=None, nullable=True)
     release_date: date = Field(nullable=False)
     duration_minutes: int = Field(nullable=False)
-    age_rating: Optional[str] = Field(default=None, nullable=True)  # Corrigido: nullable=True
-    director: Optional[str] = Field(default=None, nullable=True)    # Corrigido: nullable=True
+    age_rating: Optional[str] = Field(default=None, nullable=True)
+    director: Optional[str] = Field(default=None, nullable=True)
 
     # Relações
     reviews: List["Review"] = Relationship(back_populates="movie")
     watchlists: List["Watchlist"] = Relationship(back_populates="movie")
-    genres: List["Genre"] = Relationship(back_populates="movies", link_model="MovieGenre")
-    actors: List["Actor"] = Relationship(back_populates="movies", link_model="MovieActor")
+    genres: List["Genre"] = Relationship(
+        back_populates="movies", 
+        link_model="models.movie_genre.MovieGenre"  # Path completo
+    )
+    actors: List["Actor"] = Relationship(
+        back_populates="movies", 
+        link_model="models.movie_actor.MovieActor"  # Path completo
+    )

@@ -7,5 +7,6 @@ requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.17.2",
     "fastapi>=0.121.2",
+    "python-dotenv>=1.2.1",
     "sqlmodel>=0.0.27",
 ]
