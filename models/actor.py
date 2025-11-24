@@ -19,5 +19,5 @@ class Actor(SQLModel, table=True):
     # Relação N:N com Movie através da tabela associativa MovieActor
     movies: List["Movie"] = Relationship(
         back_populates="actors", 
-        link_model="MovieActor"  # Usando string para evitar circular imports
+        link_model="models.movie_actor.MovieActor"  # Usando path completo
     )

@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 class Review(SQLModel, table=True):
     id_review: Optional[int] = Field(default=None, primary_key=True)
     movie_id: int = Field(foreign_key="movie.id_movie", nullable=False)
-    user_id: int = Field(foreign_key="movie.id_user", nullable=False)
+    user_id: int = Field(foreign_key="user.id_user", nullable=False)  # CORRIGIDO: estava movie.id_user
     rating: float = Field(nullable=False)
     content: Optional[str] = Field(default=None, nullable=True)
 
