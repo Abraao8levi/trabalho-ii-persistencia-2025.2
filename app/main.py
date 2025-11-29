@@ -1,9 +1,7 @@
-import logging
-
 from fastapi import FastAPI
-
 from .database import create_db_and_tables
-from .routers import reviews, watchlist
+from ..routers import reviews, watchlist
+import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

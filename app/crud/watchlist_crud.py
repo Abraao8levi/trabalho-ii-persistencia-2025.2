@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from sqlmodel import Session, asc, desc, func, select
 
-from ...models.watchlist import Watchlist
+from ...models.models import Watchlist
 from .exceptions import DuplicateEntryException, NotFoundException
 
 logger = logging.getLogger(__name__)

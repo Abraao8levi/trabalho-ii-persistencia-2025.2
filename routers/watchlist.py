@@ -1,10 +1,13 @@
+from typing import List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session
-from typing import List, Optional
-from ..database import get_session
-from ..crud.watchlist_crud import WatchlistCRUD
-from ..crud.exceptions import NotFoundException, DuplicateEntryException
-from ..schemas import WatchlistCreate, WatchlistUpdate, WatchlistRead
+
+from app.crud.exceptions import DuplicateEntryException, NotFoundException
+from app.crud.watchlist_crud import WatchlistCRUD
+from app.schemas import WatchlistCreate, WatchlistRead, WatchlistUpdate
+
+from ..app.database import get_session
 
 router = APIRouter(prefix="/watchlist", tags=["watchlist"])
 
@@ -16,7 +19,7 @@ def add_to_watchlist(watchlist: WatchlistCreate, session: Session = Depends(get_
         return crud.add_to_watchlist(watchlist.dict())
     except DuplicateEntryException as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/{watchlist_id}", response_model=WatchlistRead)
@@ -27,7 +30,7 @@ def get_watchlist_item(watchlist_id: int, session: Session = Depends(get_session
         return crud.get_watchlist_item(watchlist_id)
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/user/{user_id}", response_model=List[WatchlistRead])
@@ -51,7 +54,7 @@ def get_user_watchlist(
             sort_by=sort_by,
             sort_order=sort_order
         )
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.put("/{watchlist_id}", response_model=WatchlistRead)
@@ -66,7 +69,7 @@ def update_watchlist_item(
         return crud.update_watchlist_item(watchlist_id, watchlist.dict(exclude_unset=True))
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.delete("/{watchlist_id}")
@@ -78,7 +81,7 @@ def remove_from_watchlist(watchlist_id: int, session: Session = Depends(get_sess
         return {"message": "Item removed from watchlist successfully"}
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 # Complex queries endpoints
@@ -88,7 +91,7 @@ def check_movie_in_watchlist(user_id: int, movie_id: int, session: Session = Dep
     try:
         crud = WatchlistCRUD(session)
         return {"in_watchlist": crud.is_movie_in_watchlist(user_id, movie_id)}
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/movies/most-watchlisted")
@@ -100,7 +103,7 @@ def get_most_watchlisted_movies(
     try:
         crud = WatchlistCRUD(session)
         return crud.get_most_watchlisted_movies(limit)
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/user/{user_id}/stats")
@@ -109,7 +112,7 @@ def get_user_watchlist_stats(user_id: int, session: Session = Depends(get_sessio
     try:
         crud = WatchlistCRUD(session)
         return crud.get_user_watchlist_stats(user_id)
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/user/{user_id}/search/notes")
@@ -122,5 +125,5 @@ def search_watchlist_by_notes(
     try:
         crud = WatchlistCRUD(session)
         return crud.search_watchlist_by_notes(user_id, q)
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")

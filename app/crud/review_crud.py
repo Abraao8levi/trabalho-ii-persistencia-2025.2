@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from sqlmodel import Session, asc, desc, func, select
 
-from ...models.review import Review
+from ...models.models import Review
 from .exceptions import (DuplicateEntryException, NotFoundException,
                          ValidationException)
 
