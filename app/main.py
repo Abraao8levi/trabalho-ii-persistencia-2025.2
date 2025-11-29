@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.database import create_db_and_tables
-from routers import reviews, watchlist, actors, genre
+from routers import reviews, watchlist, actors, genre, users, movies
 import logging
 
 # Configure logging
@@ -18,6 +18,8 @@ app.include_router(reviews.router)
 app.include_router(watchlist.router)
 app.include_router(actors.router)
 app.include_router(genre.router)
+app.include_router(users.router)
+app.include_router(movies.router)
 
 @app.on_event("startup")
 def on_startup():
