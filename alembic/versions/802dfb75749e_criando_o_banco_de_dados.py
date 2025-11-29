@@ -1,19 +1,19 @@
-"""Create initial tables
+"""Criando o banco de dados
 
-Revision ID: 794a787072d8
+Revision ID: 802dfb75749e
 Revises: 
-Create Date: 2025-11-26 18:23:03.899002
+Create Date: 2025-11-28 23:01:44.799073
 
 """
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-import sqlmodel.sql.sqltypes
+import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision: str = '794a787072d8'
+revision: str = '802dfb75749e'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

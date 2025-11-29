@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session
 from typing import List, Optional
-from ..app.database import get_session
+from app.database import get_session
 from app.crud.watchlist_crud import WatchlistCRUD
 from app.crud.exceptions import NotFoundException, DuplicateEntryException
 from app.schemas import WatchlistCreate, WatchlistUpdate, WatchlistRead
