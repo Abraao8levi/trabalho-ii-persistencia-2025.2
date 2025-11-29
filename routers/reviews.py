@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session
 from typing import List, Optional
-from ..database import get_session
-from ..crud.review_crud import ReviewCRUD
-from ..crud.exceptions import NotFoundException, DuplicateEntryException, ValidationException
-from ..schemas import ReviewCreate, ReviewUpdate, ReviewRead, ReviewWithRelations
+from app.database import get_session
+from app.crud import ReviewCRUD
+from app.crud.exceptions import NotFoundException, DuplicateEntryException, ValidationException
+from app.schemas import ReviewCreate, ReviewUpdate, ReviewRead, ReviewWithRelations
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 

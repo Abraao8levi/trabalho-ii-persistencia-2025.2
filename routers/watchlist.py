@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session
 from typing import List, Optional
-from ..database import get_session
-from ..crud.watchlist_crud import WatchlistCRUD
-from ..crud.exceptions import NotFoundException, DuplicateEntryException
-from ..schemas import WatchlistCreate, WatchlistUpdate, WatchlistRead
+from ..app.database import get_session
+from app.crud.watchlist_crud import WatchlistCRUD
+from app.crud.exceptions import NotFoundException, DuplicateEntryException
+from app.schemas import WatchlistCreate, WatchlistUpdate, WatchlistRead
 
 router = APIRouter(prefix="/watchlist", tags=["watchlist"])
 

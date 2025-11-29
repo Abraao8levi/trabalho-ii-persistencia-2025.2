@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from .database import create_db_and_tables
-from .routes import reviews, watchlist
+from ..routers import reviews, watchlist
 import logging
 
 # Configure logging
