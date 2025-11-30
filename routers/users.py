@@ -1,10 +1,20 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlmodel import Session, select
-from typing import List, Optional
-from app.database import get_session
-from models.models import User
 from sqlalchemy.orm import joinedload
+from sqlmodel import Session, select
+
+from app.crud.crud_users import (
+    create_user,
+    delete_user,
+    get_user,
+    get_user_by_email,
+    get_users,
+    update_user,
+)
+from app.database import get_session
 from app.schemas import UserCreate, UserRead, UserUpdate
+from models.models import User
 
 router = APIRouter(
     prefix="/users",
@@ -12,72 +22,52 @@ router = APIRouter(
 )
 
 @router.post("/", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-def create_user(user_data: UserCreate, session: Session = Depends(get_session)):
-    
-    existing_user = session.exec(
-        select(User).where(User.username == user_data.username)
-    ).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Username already exists")
+def create_user_endpoint(user_data: UserCreate, session: Session = Depends(get_session)):
 
-    existing_email = session.exec(
-        select(User).where(User.email == user_data.email)
-    ).first()
-    if existing_email:
+    existing_user = get_user_by_email(session, user_data.email)
+    if existing_user:
         raise HTTPException(status_code=400, detail="Email already exists")
 
-    db_user = User.model_validate(user_data)
+    # Check for existing username - since there's no get_user_by_username, I'll keep this direct query
+    existing_username = session.exec(
+        select(User).where(User.username == user_data.username)
+    ).first()
+    if existing_username:
+        raise HTTPException(status_code=400, detail="Username already exists")
 
-    session.add(db_user)
-    session.commit()
-    session.refresh(db_user)
-
-    return db_user
+    return create_user(session, user_data)
 
 
 @router.get("/", response_model=List[UserRead])
-def get_users(
+def get_users_endpoint(
     offset: int = 0,
     limit: int = Query(default=10, le=100),
     session: Session = Depends(get_session)
 ):
-    users = session.exec(select(User).offset(offset).limit(limit)).all()
-    return users
+    return get_users(session, offset, limit)
 
 
 @router.get("/{user_id}", response_model=UserRead)
-def get_user(user_id: int, session: Session = Depends(get_session)):
-    user = session.get(User, user_id)
+def get_user_endpoint(user_id: int, session: Session = Depends(get_session)):
+    user = get_user(session, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
 
 @router.put("/{user_id}", response_model=UserRead)
-def update_user(user_id: int, user_update: UserUpdate, session: Session = Depends(get_session)):
-    db_user = session.get(User, user_id)
-    if not db_user:
+def update_user_endpoint(user_id: int, user_update: UserUpdate, session: Session = Depends(get_session)):
+    user = update_user(session, user_id, user_update)
+    if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    update_data = user_update.model_dump(exclude_unset=True)
-
-    for key, value in update_data.items():
-        setattr(db_user, key, value)
-
-    session.add(db_user)
-    session.commit()
-    session.refresh(db_user)
-    return db_user
+    return user
 
 
 @router.delete("/{user_id}")
-def delete_user(user_id: int, session: Session = Depends(get_session)):
-    user = session.get(User, user_id)
+def delete_user_endpoint(user_id: int, session: Session = Depends(get_session)):
+    user = delete_user(session, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
-    session.delete(user)
-    session.commit()
     return {"message": "User deleted successfully"}
 
 

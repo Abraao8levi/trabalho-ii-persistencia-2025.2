@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlmodel import Session, select
-from sqlalchemy.orm import joinedload
-from app.database import get_session
-from models.models import Actor, Movie, MovieActor
 from typing import List
-from app.schemas import ActorCreate, ActorRead, ActorUpdate, MovieRead
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlmodel import Session
+
 from app.crud.actor_crud import ActorCRUD
-from app.crud.exceptions import ValidationException, DuplicateEntryException, NotFoundException
+from app.crud.exceptions import (DuplicateEntryException, NotFoundException,
+                                 ValidationException)
+from app.database import get_session
+from app.schemas import ActorCreate, ActorRead, ActorUpdate, MovieRead
 
 router = APIRouter(
     prefix="/actors",

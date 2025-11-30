@@ -3,12 +3,12 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from app.database import create_db_and_tables
 from app.crud.exceptions import (
     DuplicateEntryException,
     NotFoundException,
     ValidationException,
 )
-from app.database import create_db_and_tables
 from routers import actors, genre, movies, reviews, users, watchlist
 
 # Configure logging
