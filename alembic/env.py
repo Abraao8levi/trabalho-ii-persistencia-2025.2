@@ -1,16 +1,18 @@
-from logging.config import fileConfig
-from sqlalchemy import engine_from_config, pool
-from alembic import context
-from sqlmodel import SQLModel
-from dotenv import load_dotenv
 import os
 import sys
+from logging.config import fileConfig
+
+from dotenv import load_dotenv
+from sqlalchemy import engine_from_config, pool
+from sqlmodel import SQLModel
+
+from alembic import context
 
 # Permite importar os módulos do projeto
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-# Importa os modelos
-from models.models import Actor, Genre, Movie, MovieActor, MovieGenre
+# Importa os modelos (não utilizados diretamente, mas necessários para SQLModel.metadata)
+from models.models import Actor, Genre, Movie, MovieActor, MovieGenre  # noqa: F401
 
 # Carrega variáveis do .env
 load_dotenv()
