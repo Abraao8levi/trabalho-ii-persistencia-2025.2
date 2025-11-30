@@ -116,3 +116,13 @@ def remove_movie_from_actor(actor_id: int, movie_id: int, session: Session = Dep
     session.commit()
 
     return {"ok": True}
+
+
+@router.get("/search/{name}", response_model=List[Actor])
+def search_actors_by_name(
+    name: str,
+    session: Session = Depends(get_session)
+):
+    statement = select(Actor).where(Actor.name.ilike(f"%{name}%"))
+    actors = session.exec(statement).all()
+    return actors
