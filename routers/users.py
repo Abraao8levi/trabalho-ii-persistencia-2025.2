@@ -4,31 +4,38 @@ from typing import List, Optional
 from app.database import get_session
 from models.models import User
 from sqlalchemy.orm import joinedload
+from app.schemas import UserCreate, UserRead, UserUpdate
 
 router = APIRouter(
     prefix="/users",
     tags=["Users"]
 )
 
-@router.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
-def create_user(user: User, session: Session = Depends(get_session)):
+@router.post("/", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+def create_user(user_data: UserCreate, session: Session = Depends(get_session)):
     
-    existing_user = session.exec(select(User).where(User.username == user.username)).first()
+    existing_user = session.exec(
+        select(User).where(User.username == user_data.username)
+    ).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Username already exists")
-    
 
-    existing_email = session.exec(select(User).where(User.email == user.email)).first()
+    existing_email = session.exec(
+        select(User).where(User.email == user_data.email)
+    ).first()
     if existing_email:
         raise HTTPException(status_code=400, detail="Email already exists")
-    
-    session.add(user)
+
+    db_user = User.model_validate(user_data)
+
+    session.add(db_user)
     session.commit()
-    session.refresh(user)
-    return user
+    session.refresh(db_user)
+
+    return db_user
 
 
-@router.get("/", response_model=List[User])
+@router.get("/", response_model=List[UserRead])
 def get_users(
     offset: int = 0,
     limit: int = Query(default=10, le=100),
@@ -38,7 +45,7 @@ def get_users(
     return users
 
 
-@router.get("/{user_id}", response_model=User)
+@router.get("/{user_id}", response_model=UserRead)
 def get_user(user_id: int, session: Session = Depends(get_session)):
     user = session.get(User, user_id)
     if not user:
@@ -46,17 +53,17 @@ def get_user(user_id: int, session: Session = Depends(get_session)):
     return user
 
 
-@router.put("/{user_id}", response_model=User)
-def update_user(user_id: int, user_update: User, session: Session = Depends(get_session)):
+@router.put("/{user_id}", response_model=UserRead)
+def update_user(user_id: int, user_update: UserUpdate, session: Session = Depends(get_session)):
     db_user = session.get(User, user_id)
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
-    
-    
-    user_data = user_update.model_dump(exclude_unset=True)
-    for key, value in user_data.items():
+
+    update_data = user_update.model_dump(exclude_unset=True)
+
+    for key, value in update_data.items():
         setattr(db_user, key, value)
-    
+
     session.add(db_user)
     session.commit()
     session.refresh(db_user)

@@ -4,18 +4,20 @@ from sqlalchemy.orm import joinedload
 from app.database import get_session
 from models.models import Actor, Movie, MovieActor
 from typing import List
+from app.schemas import ActorCreate, ActorRead, ActorUpdate
 
 router = APIRouter(
     prefix="/actors",
     tags=["Actors"]
 )
 
-@router.post("/", response_model=Actor)
-def create_actor(actor: Actor, session: Session = Depends(get_session)):
-    session.add(actor)
+@router.post("/", response_model=ActorCreate)
+def create_actor(actor: ActorCreate, session: Session = Depends(get_session)):
+    db_actor = Actor.model_validate(actor)
+    session.add(db_actor)
     session.commit()
-    session.refresh(actor)
-    return actor
+    session.refresh(db_actor)
+    return db_actor
 
 @router.get("/", response_model=List[Actor])
 def get_actors(offset: int = 0, limit: int = Query(default=10, le=100), session: Session = Depends(get_session)):
@@ -24,7 +26,7 @@ def get_actors(offset: int = 0, limit: int = Query(default=10, le=100), session:
     )
     return session.exec(statement).unique().all()
 
-@router.get("/{actor_id}", response_model=Actor)
+@router.get("/{actor_id}", response_model=ActorRead)
 def get_actor_by_id(actor_id: int, session: Session = Depends(get_session)):
     statement = (
         select(Actor).where(Actor.id_actor == actor_id).options(joinedload(Actor.movies))
@@ -36,7 +38,7 @@ def get_actor_by_id(actor_id: int, session: Session = Depends(get_session)):
     return actor
 
 
-@router.put("/{actor_id}", response_model=Actor)
+@router.put("/{actor_id}", response_model=ActorUpdate)
 def update_actor(actor_id: int, actor: Actor, session: Session = Depends(get_session)):
     actorToUpdate = session.get(Actor, actor_id)
 
@@ -116,13 +118,3 @@ def remove_movie_from_actor(actor_id: int, movie_id: int, session: Session = Dep
     session.commit()
 
     return {"ok": True}
-
-
-@router.get("/search/{name}", response_model=List[Actor])
-def search_actors_by_name(
-    name: str,
-    session: Session = Depends(get_session)
-):
-    statement = select(Actor).where(Actor.name.ilike(f"%{name}%"))
-    actors = session.exec(statement).all()
-    return actors

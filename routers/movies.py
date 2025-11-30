@@ -1,24 +1,24 @@
 # app/routers/movies.py
-from datetime import date
-from typing import List, Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session, select
-
+from typing import List, Optional
+from datetime import date
 from app.database import get_session
-from models.models import Actor, Movie, MovieActor
+from models.models import Movie
+from app.schemas import MovieCreate, MovieRead, MovieUpdate
 
 router = APIRouter(
     prefix="/movies",
     tags=["Movies"]
 )
 
-@router.post("/", response_model=Movie, status_code=status.HTTP_201_CREATED)
-def create_movie(movie: Movie, session: Session = Depends(get_session)):
-    session.add(movie)
+@router.post("/", response_model=MovieRead)
+def create_movie(movie: MovieCreate, session: Session = Depends(get_session)):
+    db_movie = Movie.model_validate(movie)
+    session.add(db_movie)
     session.commit()
-    session.refresh(movie)
-    return movie
+    session.refresh(db_movie)
+    return db_movie
 
 
 
@@ -40,20 +40,6 @@ def get_movie(movie_id: int, session: Session = Depends(get_session)):
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
     return movie
-
-
-@router.get("/{movie_id}/actors", response_model=List[Actor])
-def get_movie_actors(movie_id: int, session: Session = Depends(get_session)):
-    movie = session.get(Movie, movie_id)
-    if not movie:
-        raise HTTPException(status_code=404, detail="Movie not found")
-
-    statement = (
-        select(Actor)
-        .join(MovieActor)
-        .where(MovieActor.movie_id == movie_id)
-    )
-    return session.exec(statement).all()
 
 
 
@@ -112,17 +98,6 @@ def get_movies_by_year(
 def get_movies_count(session: Session = Depends(get_session)):
     count = session.exec(select(Movie)).all()
     return {"total_movies": len(count)}
-
-
-# @router.get("/latest/{limit}", response_model=List[Movie])
-# def get_latest_movies(
-#     limit: int = Query(default=10, le=50),
-#     session: Session = Depends(get_session)
-# ):
-#     statement = select(Movie).order_by(Movie.release_date.desc()).limit(limit)
-#     movies = session.exec(statement).all()
-#     return movies
-
 
 
 @router.get("/{movie_id}/full-details")
