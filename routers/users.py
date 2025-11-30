@@ -39,7 +39,10 @@ def get_users_endpoint(
     session: Session = Depends(get_session)
 ):
     """Get a list of users"""
-    return get_users(session, offset, limit)
+    try:
+        return get_users(session, offset, limit)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/{user_id}", response_model=UserRead)
@@ -77,16 +80,22 @@ def search_users_by_username(
     session: Session = Depends(get_session)
 ):
     """Search users by username"""
-    statement = select(User).where(User.username.ilike(f"%{username}%"))
-    users = session.exec(statement).all()
-    return users
+    try:
+        statement = select(User).where(User.username.ilike(f"%{username}%"))
+        users = session.exec(statement).all()
+        return users
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/stats/count")
 def get_users_count(session: Session = Depends(get_session)):
     """Get total count of users"""
-    count = session.exec(select(User)).all()
-    return {"total_users": len(count)}
+    try:
+        count = session.exec(select(User)).all()
+        return {"total_users": len(count)}
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/created/{start_date}/{end_date}", response_model=List[User])
@@ -96,23 +105,31 @@ def get_users_by_creation_date(
     session: Session = Depends(get_session)
 ):
     """Get users by creation date range"""
-    statement = select(User).where(
-        User.created_at >= start_date,
-        User.created_at <= end_date
-    )
-    users = session.exec(statement).all()
-    return users
+    try:
+        statement = select(User).where(
+            User.created_at >= start_date,
+            User.created_at <= end_date
+        )
+        users = session.exec(statement).all()
+        return users
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/{user_id}/reviews")
 def get_user_with_reviews(user_id: int, session: Session = Depends(get_session)):
     """Get user with reviews"""
-    statement = (
-        select(User)
-        .where(User.id_user == user_id)
-        .options(joinedload(User.reviews))
-    )
-    user = session.exec(statement).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
+    try:
+        statement = (
+            select(User)
+            .where(User.id_user == user_id)
+            .options(joinedload(User.reviews))
+        )
+        user = session.exec(statement).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return user
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")

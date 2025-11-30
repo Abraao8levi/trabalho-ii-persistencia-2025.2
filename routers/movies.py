@@ -6,8 +6,9 @@ from sqlmodel import Session, select
 
 from app.crud.crud_movies import (create_movie, delete_movie, get_movie,
                                   get_movies, update_movie)
+from app.crud.exceptions import ValidationException
 from app.database import get_session
-from app.schemas import MovieCreate, MovieRead, MovieUpdate
+from app.schemas import ActorRead, MovieCreate, MovieRead, MovieUpdate
 from models.models import Movie
 
 router = APIRouter(
@@ -29,7 +30,10 @@ def get_movies_endpoint(
     session: Session = Depends(get_session)
 ):
     """Get a list of movies"""
-    return get_movies(session, offset, limit)
+    try:
+        return get_movies(session, offset, limit)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 
@@ -47,20 +51,32 @@ def get_movie_endpoint(movie_id: int, session: Session = Depends(get_session)):
 @router.put("/{movie_id}", response_model=MovieRead)
 def update_movie_endpoint(movie_id: int, movie_update: MovieUpdate, session: Session = Depends(get_session)):
     """Update a movie"""
-    movie = update_movie(session, movie_id, movie_update)
-    if not movie:
-        raise HTTPException(status_code=404, detail="Movie not found")
-    return movie
+    try:
+        movie = update_movie(session, movie_id, movie_update)
+        if not movie:
+            raise HTTPException(status_code=404, detail="Movie not found")
+        return movie
+    except HTTPException:
+        raise
+    except ValidationException as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 
 @router.delete("/{movie_id}")
 def delete_movie_endpoint(movie_id: int, session: Session = Depends(get_session)):
     """Delete a movie"""
-    movie = delete_movie(session, movie_id)
-    if not movie:
-        raise HTTPException(status_code=404, detail="Movie not found")
-    return {"message": "Movie deleted successfully"}
+    try:
+        movie = delete_movie(session, movie_id)
+        if not movie:
+            raise HTTPException(status_code=404, detail="Movie not found")
+        return {"message": "Movie deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/search/{title}", response_model=List[Movie])
@@ -69,9 +85,12 @@ def search_movies_by_title(
     session: Session = Depends(get_session)
 ):
     """Search movies by title"""
-    statement = select(Movie).where(Movie.title.ilike(f"%{title}%"))
-    movies = session.exec(statement).all()
-    return movies
+    try:
+        statement = select(Movie).where(Movie.title.ilike(f"%{title}%"))
+        movies = session.exec(statement).all()
+        return movies
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 
@@ -81,30 +100,82 @@ def get_movies_by_year(
     session: Session = Depends(get_session)
 ):
     """Get movies by release year"""
-    statement = select(Movie).where(Movie.release_date >= f"{year}-01-01",
-                                    Movie.release_date <= f"{year}-12-31")
-    movies = session.exec(statement).all()
-    return movies
+    try:
+        statement = select(Movie).where(Movie.release_date >= f"{year}-01-01",
+                                        Movie.release_date <= f"{year}-12-31")
+        movies = session.exec(statement).all()
+        return movies
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 
 @router.get("/stats/count")
 def get_movies_count(session: Session = Depends(get_session)):
     """Get total count of movies"""
-    count = session.exec(select(Movie)).all()
-    return {"total_movies": len(count)}
+    try:
+        count = session.exec(select(Movie)).all()
+        return {"total_movies": len(count)}
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.get("/{movie_id}/stats")
+def get_movie_stats(movie_id: int, session: Session = Depends(get_session)):
+    """Get movie statistics including actor count"""
+    try:
+        from sqlalchemy.orm import joinedload
+        statement = (
+            select(Movie)
+            .where(Movie.id_movie == movie_id)
+            .options(joinedload(Movie.actors))
+        )
+        movie = session.exec(statement).first()
+        if not movie:
+            raise HTTPException(status_code=404, detail="Movie not found")
+        actor_count = len(movie.actors) if movie.actors else 0
+        return {"movie_id": movie_id, "actor_count": actor_count}
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.get("/{movie_id}/actors/", response_model=List[ActorRead])
+def get_movie_actors(movie_id: int, session: Session = Depends(get_session)):
+    """Get actors of a movie"""
+    try:
+        from sqlalchemy.orm import joinedload
+        statement = (
+            select(Movie)
+            .where(Movie.id_movie == movie_id)
+            .options(joinedload(Movie.actors))
+        )
+        movie = session.exec(statement).first()
+        if not movie:
+            raise HTTPException(status_code=404, detail="Movie not found")
+        return movie.actors if movie.actors else []
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/{movie_id}/full-details")
 def get_movie_with_details(movie_id: int, session: Session = Depends(get_session)):
     """Get movie with full details including actors and genres"""
-    from sqlalchemy.orm import joinedload
-    statement = (
-        select(Movie)
-        .where(Movie.id_movie == movie_id)
-        .options(joinedload(Movie.actors), joinedload(Movie.genres))
-    )
-    movie = session.exec(statement).first()
-    if not movie:
-        raise HTTPException(status_code=404, detail="Movie not found")
-    return movie
+    try:
+        from sqlalchemy.orm import joinedload
+        statement = (
+            select(Movie)
+            .where(Movie.id_movie == movie_id)
+            .options(joinedload(Movie.actors), joinedload(Movie.genres))
+        )
+        movie = session.exec(statement).first()
+        if not movie:
+            raise HTTPException(status_code=404, detail="Movie not found")
+        return movie
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
