@@ -1,10 +1,12 @@
 # app/routers/movies.py
+from datetime import date
+from typing import List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session, select
-from typing import List, Optional
-from datetime import date
+
 from app.database import get_session
-from models.models import Movie
+from models.models import Actor, Movie, MovieActor
 
 router = APIRouter(
     prefix="/movies",
@@ -38,6 +40,20 @@ def get_movie(movie_id: int, session: Session = Depends(get_session)):
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
     return movie
+
+
+@router.get("/{movie_id}/actors", response_model=List[Actor])
+def get_movie_actors(movie_id: int, session: Session = Depends(get_session)):
+    movie = session.get(Movie, movie_id)
+    if not movie:
+        raise HTTPException(status_code=404, detail="Movie not found")
+
+    statement = (
+        select(Actor)
+        .join(MovieActor)
+        .where(MovieActor.movie_id == movie_id)
+    )
+    return session.exec(statement).all()
 
 
 
