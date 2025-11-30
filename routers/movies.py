@@ -4,13 +4,8 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 
-from app.crud.crud_movies import (
-    create_movie,
-    delete_movie,
-    get_movie,
-    get_movies,
-    update_movie,
-)
+from app.crud.crud_movies import (create_movie, delete_movie, get_movie,
+                                  get_movies, update_movie)
 from app.database import get_session
 from app.schemas import MovieCreate, MovieRead, MovieUpdate
 from models.models import Movie
@@ -22,6 +17,7 @@ router = APIRouter(
 
 @router.post("/", response_model=MovieRead)
 def create_movie_endpoint(movie: MovieCreate, session: Session = Depends(get_session)):
+    """Create a new movie"""
     return create_movie(session, movie)
 
 
@@ -32,6 +28,7 @@ def get_movies_endpoint(
     limit: int = Query(default=10, le=100),
     session: Session = Depends(get_session)
 ):
+    """Get a list of movies"""
     return get_movies(session, offset, limit)
 
 
@@ -39,6 +36,7 @@ def get_movies_endpoint(
 
 @router.get("/{movie_id}", response_model=MovieRead)
 def get_movie_endpoint(movie_id: int, session: Session = Depends(get_session)):
+    """Get movie by ID"""
     movie = get_movie(session, movie_id)
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
@@ -48,6 +46,7 @@ def get_movie_endpoint(movie_id: int, session: Session = Depends(get_session)):
 
 @router.put("/{movie_id}", response_model=MovieRead)
 def update_movie_endpoint(movie_id: int, movie_update: MovieUpdate, session: Session = Depends(get_session)):
+    """Update a movie"""
     movie = update_movie(session, movie_id, movie_update)
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
@@ -57,6 +56,7 @@ def update_movie_endpoint(movie_id: int, movie_update: MovieUpdate, session: Ses
 
 @router.delete("/{movie_id}")
 def delete_movie_endpoint(movie_id: int, session: Session = Depends(get_session)):
+    """Delete a movie"""
     movie = delete_movie(session, movie_id)
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
@@ -68,6 +68,7 @@ def search_movies_by_title(
     title: str,
     session: Session = Depends(get_session)
 ):
+    """Search movies by title"""
     statement = select(Movie).where(Movie.title.ilike(f"%{title}%"))
     movies = session.exec(statement).all()
     return movies
@@ -79,6 +80,7 @@ def get_movies_by_year(
     year: int,
     session: Session = Depends(get_session)
 ):
+    """Get movies by release year"""
     statement = select(Movie).where(Movie.release_date >= f"{year}-01-01",
                                     Movie.release_date <= f"{year}-12-31")
     movies = session.exec(statement).all()
@@ -88,12 +90,14 @@ def get_movies_by_year(
 
 @router.get("/stats/count")
 def get_movies_count(session: Session = Depends(get_session)):
+    """Get total count of movies"""
     count = session.exec(select(Movie)).all()
     return {"total_movies": len(count)}
 
 
 @router.get("/{movie_id}/full-details")
 def get_movie_with_details(movie_id: int, session: Session = Depends(get_session)):
+    """Get movie with full details including actors and genres"""
     from sqlalchemy.orm import joinedload
     statement = (
         select(Movie)
