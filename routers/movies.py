@@ -10,6 +10,7 @@ from app.crud.exceptions import ValidationException
 from app.database import get_session
 from app.schemas_models.movies import MovieCreate, MovieRead, MovieUpdate
 from app.schemas_models.aggregations import MovieFullInfo
+from app.schemas_models.actors import ActorRead
 from models.models import Movie
 from app.crud.crud_movies import get_movie_full_info
 from app.crud.exceptions import NotFoundException
