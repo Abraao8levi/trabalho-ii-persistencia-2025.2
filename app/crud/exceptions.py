@@ -1,19 +1,14 @@
-class AppException(Exception):
-    """Base exception for the application"""
-    pass
+class NotFoundException(Exception):
+    def __init__(self, message: str = "Resource not found"):
+        self.message = message
+        super().__init__(self.message)
 
-class NotFoundException(AppException):
-    """Resource not found"""
-    pass
+class DuplicateEntryException(Exception):
+    def __init__(self, message: str = "Duplicate entry"):
+        self.message = message
+        super().__init__(self.message)
 
-class DuplicateEntryException(AppException):
-    """Duplicate entry violation"""
-    pass
-
-class ValidationException(AppException):
-    """Validation error"""
-    pass
-
-class DatabaseException(AppException):
-    """Database operation error"""
-    pass
+class ValidationException(Exception):
+    def __init__(self, message: str = "Validation error"):
+        self.message = message
+        super().__init__(self.message)

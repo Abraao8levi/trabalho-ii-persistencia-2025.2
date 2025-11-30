@@ -4,8 +4,15 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 
+from app.crud.crud_movies import (
+    create_movie,
+    delete_movie,
+    get_movie,
+    get_movies,
+    update_movie,
+)
 from app.database import get_session
-from app.schemas import MovieCreate, MovieRead
+from app.schemas import MovieCreate, MovieRead, MovieUpdate
 from models.models import Movie
 
 router = APIRouter(
@@ -14,61 +21,45 @@ router = APIRouter(
 )
 
 @router.post("/", response_model=MovieRead)
-def create_movie(movie: MovieCreate, session: Session = Depends(get_session)):
-    db_movie = Movie.model_validate(movie)
-    session.add(db_movie)
-    session.commit()
-    session.refresh(db_movie)
-    return db_movie
+def create_movie_endpoint(movie: MovieCreate, session: Session = Depends(get_session)):
+    return create_movie(session, movie)
 
 
 
-@router.get("/", response_model=List[Movie])
-def get_movies(
+@router.get("/", response_model=List[MovieRead])
+def get_movies_endpoint(
     offset: int = 0,
     limit: int = Query(default=10, le=100),
     session: Session = Depends(get_session)
 ):
-    movies = session.exec(select(Movie).offset(offset).limit(limit)).all()
-    return movies
+    return get_movies(session, offset, limit)
 
 
 
 
-@router.get("/{movie_id}", response_model=Movie)
-def get_movie(movie_id: int, session: Session = Depends(get_session)):
-    movie = session.get(Movie, movie_id)
+@router.get("/{movie_id}", response_model=MovieRead)
+def get_movie_endpoint(movie_id: int, session: Session = Depends(get_session)):
+    movie = get_movie(session, movie_id)
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
     return movie
 
 
 
-@router.put("/{movie_id}", response_model=Movie)
-def update_movie(movie_id: int, movie_update: Movie, session: Session = Depends(get_session)):
-    db_movie = session.get(Movie, movie_id)
-    if not db_movie:
+@router.put("/{movie_id}", response_model=MovieRead)
+def update_movie_endpoint(movie_id: int, movie_update: MovieUpdate, session: Session = Depends(get_session)):
+    movie = update_movie(session, movie_id, movie_update)
+    if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
-
-    movie_data = movie_update.model_dump(exclude_unset=True)
-    for key, value in movie_data.items():
-        setattr(db_movie, key, value)
-
-    session.add(db_movie)
-    session.commit()
-    session.refresh(db_movie)
-    return db_movie
+    return movie
 
 
 
 @router.delete("/{movie_id}")
-def delete_movie(movie_id: int, session: Session = Depends(get_session)):
-    movie = session.get(Movie, movie_id)
+def delete_movie_endpoint(movie_id: int, session: Session = Depends(get_session)):
+    movie = delete_movie(session, movie_id)
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
-
-    session.delete(movie)
-    session.commit()
     return {"message": "Movie deleted successfully"}
 
 
