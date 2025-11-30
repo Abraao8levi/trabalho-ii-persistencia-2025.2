@@ -1,7 +1,15 @@
-from fastapi import FastAPI
-from app.database import create_db_and_tables
-from routers import reviews, watchlist, actors, genre, users, movies
 import logging
+
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+
+from app.crud.exceptions import (
+    DuplicateEntryException,
+    NotFoundException,
+    ValidationException,
+)
+from app.database import create_db_and_tables
+from routers import actors, genre, movies, reviews, users, watchlist
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -12,6 +20,28 @@ app = FastAPI(
     description="A comprehensive API for movie reviews and watchlists",
     version="1.0.0"
 )
+
+# Exception Handlers
+@app.exception_handler(NotFoundException)
+async def not_found_exception_handler(request: Request, exc: NotFoundException):
+    return JSONResponse(
+        status_code=404,
+        content={"message": exc.message},
+    )
+
+@app.exception_handler(DuplicateEntryException)
+async def duplicate_entry_exception_handler(request: Request, exc: DuplicateEntryException):
+    return JSONResponse(
+        status_code=409,  # Conflict
+        content={"message": exc.message},
+    )
+
+@app.exception_handler(ValidationException)
+async def validation_exception_handler(request: Request, exc: ValidationException):
+    return JSONResponse(
+        status_code=422,  # Unprocessable Entity
+        content={"message": exc.message},
+    )
 
 # Include routers
 app.include_router(reviews.router)
