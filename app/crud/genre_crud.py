@@ -86,3 +86,30 @@ class GenreCRUD:
         )
 
         return self.session.exec(statement).all()
+
+    def add_movie_to_genre(self, genre_id: int, movie_id: int):
+        genre = self.session.get(Genre, genre_id)
+        movie = self.session.get(Movie, movie_id)
+
+        if not genre:
+            raise NotFoundException("Genre not found")
+
+        if not movie:
+            raise NotFoundException("Movie not found")
+
+        existing_link = self.session.exec(
+            select(MovieGenre).where(
+                MovieGenre.genre_id == genre_id,
+                MovieGenre.movie_id == movie_id
+            )
+        ).first()
+
+        if existing_link:
+            raise DuplicateEntryException("This movie is already associated with this genre")
+
+        # Cria o vínculo
+        link = MovieGenre(genre_id=genre_id, movie_id=movie_id)
+        self.session.add(link)
+        self.session.commit()
+
+        return movie

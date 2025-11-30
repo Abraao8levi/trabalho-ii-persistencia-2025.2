@@ -80,3 +80,15 @@ def read_movies_of_genre(genre_id: int, session: Session = Depends(get_session))
         raise HTTPException(status_code=404, detail=str(e))
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.post("/{genre_id}/movies/{movie_id}", response_model=MovieRead)
+def add_movie_to_genre(genre_id: int, movie_id: int, session: Session = Depends(get_session)):
+    try:
+        crud = GenreCRUD(session)
+        return crud.add_movie_to_genre(genre_id, movie_id)
+    except NotFoundException as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except DuplicateEntryException as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
