@@ -1,10 +1,16 @@
+from typing import List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session
-from typing import List, Optional
-from app.database import get_session
+
+from app.crud.exceptions import (
+    DuplicateEntryException,
+    NotFoundException,
+    ValidationException,
+)
 from app.crud.review_crud import ReviewCRUD
-from app.crud.exceptions import NotFoundException, DuplicateEntryException, ValidationException
-from app.schemas import ReviewCreate, ReviewUpdate, ReviewRead, ReviewWithRelations
+from app.database import get_session
+from app.schemas import ReviewCreate, ReviewRead, ReviewUpdate
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 
@@ -18,7 +24,7 @@ def create_review(review: ReviewCreate, session: Session = Depends(get_session))
         raise HTTPException(status_code=400, detail=str(e))
     except ValidationException as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/{review_id}", response_model=ReviewRead)
@@ -29,7 +35,7 @@ def get_review(review_id: int, session: Session = Depends(get_session)):
         return crud.get_review_by_id(review_id)
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/", response_model=List[ReviewRead])
@@ -59,7 +65,7 @@ def get_reviews(
             sort_by=sort_by,
             sort_order=sort_order
         )
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.put("/{review_id}", response_model=ReviewRead)
@@ -72,7 +78,7 @@ def update_review(review_id: int, review: ReviewUpdate, session: Session = Depen
         raise HTTPException(status_code=404, detail=str(e))
     except ValidationException as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.delete("/{review_id}")
@@ -84,7 +90,7 @@ def delete_review(review_id: int, session: Session = Depends(get_session)):
         return {"message": "Review deleted successfully"}
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 # Complex queries endpoints
@@ -94,7 +100,7 @@ def get_movie_review_stats(movie_id: int, session: Session = Depends(get_session
     try:
         crud = ReviewCRUD(session)
         return crud.get_movie_review_stats(movie_id)
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/user/{user_id}/history")
@@ -103,7 +109,7 @@ def get_user_review_history(user_id: int, session: Session = Depends(get_session
     try:
         crud = ReviewCRUD(session)
         return crud.get_user_review_history(user_id)
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/movies/top-rated")
@@ -115,7 +121,7 @@ def get_top_rated_movies(
     try:
         crud = ReviewCRUD(session)
         return crud.get_top_rated_movies(limit)
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/search/content")
@@ -127,5 +133,5 @@ def search_reviews_by_content(
     try:
         crud = ReviewCRUD(session)
         return crud.search_reviews_by_content(q)
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")

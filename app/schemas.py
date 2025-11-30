@@ -1,6 +1,8 @@
-from typing import Optional, List
-from sqlmodel import SQLModel
 from datetime import date, datetime
+from typing import Optional
+
+from sqlmodel import SQLModel
+
 
 # Review Schemas
 class ReviewBase(SQLModel):

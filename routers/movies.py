@@ -1,11 +1,12 @@
 # app/routers/movies.py
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
-from typing import List, Optional
-from datetime import date
+
 from app.database import get_session
+from app.schemas import MovieCreate, MovieRead
 from models.models import Movie
-from app.schemas import MovieCreate, MovieRead, MovieUpdate
 
 router = APIRouter(
     prefix="/movies",
