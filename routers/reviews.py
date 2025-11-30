@@ -10,7 +10,7 @@ from app.crud.exceptions import (
 )
 from app.crud.review_crud import ReviewCRUD
 from app.database import get_session
-from app.schemas import ReviewCreate, ReviewRead, ReviewUpdate
+from app.schemas_models.reviews import ReviewCreate, ReviewRead, ReviewUpdate
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 

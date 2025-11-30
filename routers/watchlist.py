@@ -4,7 +4,7 @@ from typing import List, Optional
 from app.database import get_session
 from app.crud.watchlist_crud import WatchlistCRUD
 from app.crud.exceptions import NotFoundException, DuplicateEntryException
-from app.schemas import WatchlistCreate, WatchlistUpdate, WatchlistRead
+from app.schemas_models.watchlist import WatchlistCreate, WatchlistUpdate, WatchlistRead
 
 router = APIRouter(prefix="/watchlist", tags=["watchlist"])
 

@@ -3,7 +3,7 @@ from sqlmodel import Session, select
 from sqlalchemy.orm import joinedload
 from app.crud.exceptions import NotFoundException, DuplicateEntryException, ValidationException
 from models.models import Actor, Movie, MovieActor
-from app.schemas import ActorCreate, ActorUpdate
+from app.schemas_models.actors import ActorCreate, ActorUpdate
 from typing import List
 
 logger = logging.getLogger(__name__)

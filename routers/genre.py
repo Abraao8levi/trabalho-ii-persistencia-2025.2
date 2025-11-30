@@ -4,7 +4,8 @@ from typing import List
 from app.database import get_session
 from app.crud.genre_crud import GenreCRUD
 from app.crud.exceptions import NotFoundException, DuplicateEntryException, ValidationException
-from app.schemas import GenreCreate, GenreRead, GenreUpdate, MovieRead
+from app.schemas_models.genres import GenreCreate, GenreRead, GenreUpdate
+from app.schemas_models.movies import MovieRead
 
 
 router = APIRouter(

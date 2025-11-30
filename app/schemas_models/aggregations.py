@@ -1,4 +1,8 @@
 from sqlmodel import SQLModel
+from typing import List
+from .movies import MovieRead
+from .actors import ActorRead
+from .genres import GenreRead
 
 
 class MovieStats(SQLModel):
@@ -15,3 +19,9 @@ class UserActivity(SQLModel):
     reviews_count: int
     watchlist_count: int
     avg_user_rating: float
+
+class MovieFullInfo(SQLModel):
+    movie: MovieRead
+    actors: List[ActorRead]
+    genres: List[GenreRead]
+    review_count: int

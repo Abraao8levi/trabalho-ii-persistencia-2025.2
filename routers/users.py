@@ -13,7 +13,7 @@ from app.crud.crud_users import (
     update_user,
 )
 from app.database import get_session
-from app.schemas import UserCreate, UserRead, UserUpdate
+from app.schemas_models.users import UserCreate, UserRead, UserUpdate
 from models.models import User
 
 router = APIRouter(

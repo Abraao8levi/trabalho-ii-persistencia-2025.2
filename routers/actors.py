@@ -7,7 +7,8 @@ from app.crud.actor_crud import ActorCRUD
 from app.crud.exceptions import (DuplicateEntryException, NotFoundException,
                                  ValidationException)
 from app.database import get_session
-from app.schemas import ActorCreate, ActorRead, ActorUpdate, MovieRead
+from app.schemas_models.actors import ActorCreate, ActorRead, ActorUpdate
+from app.schemas_models.movies import MovieRead
 
 router = APIRouter(
     prefix="/actors",

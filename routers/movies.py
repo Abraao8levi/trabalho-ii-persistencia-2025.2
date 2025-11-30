@@ -1,7 +1,7 @@
 # app/routers/movies.py
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session, select
 
 from app.crud.crud_movies import (
@@ -12,8 +12,11 @@ from app.crud.crud_movies import (
     update_movie,
 )
 from app.database import get_session
-from app.schemas import MovieCreate, MovieRead, MovieUpdate
+from app.schemas_models.movies import MovieCreate, MovieRead, MovieUpdate
+from app.schemas_models.aggregations import MovieFullInfo
 from models.models import Movie
+from app.crud.crud_movies import get_movie_full_info
+from app.crud.exceptions import NotFoundException
 
 router = APIRouter(
     prefix="/movies",
@@ -92,15 +95,12 @@ def get_movies_count(session: Session = Depends(get_session)):
     return {"total_movies": len(count)}
 
 
-@router.get("/{movie_id}/full-details")
+@router.get("/{movie_id}/full-details", response_model=MovieFullInfo)
 def get_movie_with_details(movie_id: int, session: Session = Depends(get_session)):
-    from sqlalchemy.orm import joinedload
-    statement = (
-        select(Movie)
-        .where(Movie.id_movie == movie_id)
-        .options(joinedload(Movie.actors), joinedload(Movie.genres))
-    )
-    movie = session.exec(statement).first()
-    if not movie:
-        raise HTTPException(status_code=404, detail="Movie not found")
-    return movie
+    try:
+        return get_movie_full_info(session, movie_id)
+    except NotFoundException as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Internal server error")
