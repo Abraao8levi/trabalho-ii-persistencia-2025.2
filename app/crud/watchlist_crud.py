@@ -3,8 +3,8 @@ from typing import List, Optional
 
 from sqlmodel import Session, asc, desc, func, select
 
-from models.models import Watchlist
 from app.crud.exceptions import DuplicateEntryException, NotFoundException
+from models.models import Watchlist
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +18,8 @@ class WatchlistCRUD:
             # Check if movie is already in user's watchlist
             existing_entry = self.session.exec(
                 select(Watchlist).where(
-                    Watchlist.id_user == watchlist_data["id_user"],
-                    Watchlist.id_movie == watchlist_data["id_movie"]
+                    Watchlist.user_id == watchlist_data.get("user_id"),
+                    Watchlist.movie_id == watchlist_data.get("movie_id")
                 )
             ).first()
             
@@ -54,7 +54,7 @@ class WatchlistCRUD:
         sort_order: str = "desc"
     ) -> List[Watchlist]:
         """Get user's watchlist with filtering"""
-        query = select(Watchlist).where(Watchlist.id_user == user_id)
+        query = select(Watchlist).where(Watchlist.user_id == user_id)
         
         if search_notes:
             query = query.where(Watchlist.notes.contains(search_notes))
@@ -104,8 +104,8 @@ class WatchlistCRUD:
         """Check if movie is in user's watchlist"""
         item = self.session.exec(
             select(Watchlist).where(
-                Watchlist.id_user == user_id,
-                Watchlist.id_movie == movie_id
+                Watchlist.user_id == user_id,
+                Watchlist.movie_id == movie_id
             )
         ).first()
         return item is not None
@@ -115,10 +115,10 @@ class WatchlistCRUD:
         """Get most watchlisted movies"""
         query = (
             select(
-                Watchlist.id_movie,
+                Watchlist.movie_id,
                 func.count(Watchlist.id_watchlist).label("watchlist_count")
             )
-            .group_by(Watchlist.id_movie)
+            .group_by(Watchlist.movie_id)
             .order_by(desc("watchlist_count"))
             .limit(limit)
         )
@@ -129,13 +129,13 @@ class WatchlistCRUD:
         """Get user's watchlist statistics"""
         total_count = self.session.exec(
             select(func.count(Watchlist.id_watchlist))
-            .where(Watchlist.id_user == user_id)
+            .where(Watchlist.user_id == user_id)
         ).first()
         
         with_notes_count = self.session.exec(
             select(func.count(Watchlist.id_watchlist))
             .where(
-                Watchlist.id_user == user_id,
+                Watchlist.user_id == user_id,
                 Watchlist.notes.is_not(None)
             )
         ).first()
@@ -152,7 +152,7 @@ class WatchlistCRUD:
         query = (
             select(Watchlist)
             .where(
-                Watchlist.id_user == user_id,
+                Watchlist.user_id == user_id,
                 Watchlist.notes.contains(search_term)
             )
             .order_by(desc(Watchlist.id_watchlist))

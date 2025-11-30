@@ -4,8 +4,8 @@ from typing import List, Optional
 from sqlmodel import Session, asc, desc, func, select
 
 from models.models import Review
-from .exceptions import (DuplicateEntryException, NotFoundException,
-                         ValidationException)
+
+from .exceptions import DuplicateEntryException, NotFoundException, ValidationException
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +19,8 @@ class ReviewCRUD:
             # Check if review already exists for this user and movie
             existing_review = self.session.exec(
                 select(Review).where(
-                    Review.user_id == review_data["user_id"],
-                    Review.movie_id == review_data["movie_id"]
+                    Review.user_id == review_data.get("user_id"),
+                    Review.movie_id == review_data.get("movie_id")
                 )
             ).first()
             
