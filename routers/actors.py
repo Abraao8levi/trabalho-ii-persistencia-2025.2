@@ -1,120 +1,101 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session, select
 from sqlalchemy.orm import joinedload
 from app.database import get_session
 from models.models import Actor, Movie, MovieActor
 from typing import List
-from app.schemas import ActorCreate, ActorRead, ActorUpdate
+from app.schemas import ActorCreate, ActorRead, ActorUpdate, MovieRead
+from app.crud.actor_crud import ActorCRUD
+from app.crud.exceptions import ValidationException, DuplicateEntryException, NotFoundException
 
 router = APIRouter(
     prefix="/actors",
     tags=["Actors"]
 )
 
-@router.post("/", response_model=ActorCreate)
+@router.post("/", response_model=ActorRead, status_code=status.HTTP_201_CREATED)
 def create_actor(actor: ActorCreate, session: Session = Depends(get_session)):
-    db_actor = Actor.model_validate(actor)
-    session.add(db_actor)
-    session.commit()
-    session.refresh(db_actor)
-    return db_actor
+    try:
+        crud = ActorCRUD(session)
+        return crud.create_actor(actor.model_dump())
+    except ValidationException as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except DuplicateEntryException as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.get("/", response_model=List[Actor])
+@router.get("/", response_model=List[ActorRead])
 def get_actors(offset: int = 0, limit: int = Query(default=10, le=100), session: Session = Depends(get_session)):
-    statement = (
-        select(Actor).offset(offset).limit(limit).options(joinedload(Actor.movies))
-    )
-    return session.exec(statement).unique().all()
+    try:
+        crud = ActorCRUD(session)
+        return crud.get_actors(offset, limit)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/{actor_id}", response_model=ActorRead)
 def get_actor_by_id(actor_id: int, session: Session = Depends(get_session)):
-    statement = (
-        select(Actor).where(Actor.id_actor == actor_id).options(joinedload(Actor.movies))
-    )
-    actor = session.exec(statement).first()
+    try:
+        crud = ActorCRUD(session)
+        return crud.get_actor_by_id(actor_id)
+    except NotFoundException as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
-    if not actor:
-        raise HTTPException(status_code=404, detail="Actor not found")
-    return actor
 
-
-@router.put("/{actor_id}", response_model=ActorUpdate)
-def update_actor(actor_id: int, actor: Actor, session: Session = Depends(get_session)):
-    actorToUpdate = session.get(Actor, actor_id)
-
-    if not actorToUpdate:
-        raise HTTPException(status_code=404, detail="Actor not found")
-    for key, value in actor.model_dump(exclude_unset=True).items():
-        setattr(actorToUpdate, key, value)
-    
-    session.add(actorToUpdate)
-    session.commit()
-    session.refresh(actorToUpdate)
-    return actorToUpdate
+@router.put("/{actor_id}", response_model=ActorRead)
+def update_actor(actor_id: int, actor: ActorUpdate, session: Session = Depends(get_session)):
+    try:
+        crud = ActorCRUD(session)
+        return crud.update_actor(actor_id, actor.model_dump(exclude_unset=True))
+    except NotFoundException as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValidationException as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.delete("/{actor_id}")
 def delete_actor(actor_id: int, session: Session = Depends(get_session)):
-    actor = session.get(Actor, actor_id)
+    try:
+        crud = ActorCRUD(session)
+        crud.delete_actor(actor_id)
+        return {"message": "Actor deleted successfully"}
+    except NotFoundException as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
-    if not actor:
-        raise HTTPException(status_code=404, detail="Actor not found")
 
-    session.delete(actor)
-    session.commit()
-
-    return {"ok": True}
-
-
-@router.post("/{actor_id}/movies/{movie_id}", response_model=Movie)
+@router.post("/{actor_id}/movies/{movie_id}", response_model=MovieRead)
 def add_movie_to_actor(actor_id: int, movie_id: int, session: Session = Depends(get_session)):
-    actor = session.get(Actor, actor_id)
-    movie = session.get(Movie, movie_id)
+    try:
+        crud = ActorCRUD(session)
+        return crud.add_movie_to_actor(actor_id, movie_id)
+    except NotFoundException as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
-    if not actor or not movie:
-        raise HTTPException(status_code=404, detail="Actor or Movie not found")
-
-    link = session.exec(
-        select(MovieActor).where(
-            MovieActor.actor_id == actor_id,
-            MovieActor.movie_id == movie_id
-        )
-    ).first()
-
-    if link:
-        return movie  
-
-    new_link = MovieActor(actor_id=actor_id, movie_id=movie_id)
-    session.add(new_link)
-    session.commit()
-
-    return movie
-
-@router.get("/{actor_id}/movies/", response_model=List[Movie])
-def read_movies_of_actor(actor_id: int, session: Session = Depends(get_session)):
-
-    statement = (
-        select(Movie)
-        .join(MovieActor)
-        .where(MovieActor.actor_id == actor_id)
-    )
-    return session.exec(statement).all()
+@router.get("/{actor_id}/movies/", response_model=List[MovieRead])
+def get_movies_of_actor(actor_id: int, session: Session = Depends(get_session)):
+    try:
+        crud = ActorCRUD(session)
+        return crud.get_actor_movies(actor_id)
+    except NotFoundException as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.delete("/{actor_id}/movies/{movie_id}")
 def remove_movie_from_actor(actor_id: int, movie_id: int, session: Session = Depends(get_session)):
-
-    link = session.exec(
-        select(MovieActor).where(
-            MovieActor.actor_id == actor_id,
-            MovieActor.movie_id == movie_id
-        )
-    ).first()
-
-    if not link:
-        raise HTTPException(status_code=404, detail="Link actor-movie not found")
-
-    session.delete(link)
-    session.commit()
-
-    return {"ok": True}
+    try:
+        crud = ActorCRUD(session)
+        return crud.remove_movie_from_actor(actor_id, movie_id)
+    except NotFoundException as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")

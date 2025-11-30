@@ -13,7 +13,7 @@ def add_to_watchlist(watchlist: WatchlistCreate, session: Session = Depends(get_
     """Add movie to user's watchlist"""
     try:
         crud = WatchlistCRUD(session)
-        return crud.add_to_watchlist(watchlist.dict())
+        return crud.add_to_watchlist(watchlist.model_dump())
     except DuplicateEntryException as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -63,7 +63,7 @@ def update_watchlist_item(
     """Update watchlist item"""
     try:
         crud = WatchlistCRUD(session)
-        return crud.update_watchlist_item(watchlist_id, watchlist.dict(exclude_unset=True))
+        return crud.update_watchlist_item(watchlist_id, watchlist.model_dump(exclude_unset=True))
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
