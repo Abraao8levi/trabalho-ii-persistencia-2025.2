@@ -1,0 +1,4 @@
+Paulo Henrique - Criação inicial dos models da API, implementação das rotas das entidades "Actor" e "Genre", correção de bugs do sistema 
+e povoamento do banco de dados.
+Abraão Levi - Implementação das rotas das entidades "Watchlist" e "Reviews", correção de bugs do sistema e povoamento do banco de dados.
+João Alves - User e Movies - Implementação das rotas das entidades "User" e "Movies", correção de bugs e povoamento do banco de dados.

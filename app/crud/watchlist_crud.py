@@ -18,8 +18,8 @@ class WatchlistCRUD:
             # Check if movie is already in user's watchlist
             existing_entry = self.session.exec(
                 select(Watchlist).where(
-                    Watchlist.user_id == watchlist_data.get("user_id"),
-                    Watchlist.movie_id == watchlist_data.get("movie_id")
+                    Watchlist.id_user == watchlist_data.get("id_user"),
+                    Watchlist.id_movie == watchlist_data.get("id_movie")
                 )
             ).first()
             
@@ -46,7 +46,7 @@ class WatchlistCRUD:
 
     def get_user_watchlist(
         self, 
-        user_id: int,
+        id_user: int,
         skip: int = 0, 
         limit: int = 100,
         search_notes: Optional[str] = None,
@@ -54,7 +54,7 @@ class WatchlistCRUD:
         sort_order: str = "desc"
     ) -> List[Watchlist]:
         """Get user's watchlist with filtering"""
-        query = select(Watchlist).where(Watchlist.user_id == user_id)
+        query = select(Watchlist).where(Watchlist.id_user == id_user)
         
         if search_notes:
             query = query.where(Watchlist.notes.contains(search_notes))
@@ -100,12 +100,12 @@ class WatchlistCRUD:
             logger.error(f"Error removing watchlist item {watchlist_id}: {str(e)}")
             raise
 
-    def is_movie_in_watchlist(self, user_id: int, movie_id: int) -> bool:
+    def is_movie_in_watchlist(self, id_user: int, id_movie: int) -> bool:
         """Check if movie is in user's watchlist"""
         item = self.session.exec(
             select(Watchlist).where(
-                Watchlist.user_id == user_id,
-                Watchlist.movie_id == movie_id
+                Watchlist.id_user == id_user,
+                Watchlist.id_movie == id_movie
             )
         ).first()
         return item is not None
@@ -115,44 +115,44 @@ class WatchlistCRUD:
         """Get most watchlisted movies"""
         query = (
             select(
-                Watchlist.movie_id,
+                Watchlist.id_movie,
                 func.count(Watchlist.id_watchlist).label("watchlist_count")
             )
-            .group_by(Watchlist.movie_id)
+            .group_by(Watchlist.id_movie)
             .order_by(desc("watchlist_count"))
             .limit(limit)
         )
         
         return self.session.exec(query).all()
 
-    def get_user_watchlist_stats(self, user_id: int) -> dict:
+    def get_user_watchlist_stats(self, id_user: int) -> dict:
         """Get user's watchlist statistics"""
         total_count = self.session.exec(
             select(func.count(Watchlist.id_watchlist))
-            .where(Watchlist.user_id == user_id)
+            .where(Watchlist.id_user == id_user)
         ).first()
         
         with_notes_count = self.session.exec(
             select(func.count(Watchlist.id_watchlist))
             .where(
-                Watchlist.user_id == user_id,
+                Watchlist.id_user == id_user,
                 Watchlist.notes.is_not(None)
             )
         ).first()
         
         return {
-            "user_id": user_id,
+            "id_user": id_user,
             "total_watchlist_items": total_count or 0,
             "items_with_notes": with_notes_count or 0,
             "items_without_notes": (total_count or 0) - (with_notes_count or 0)
         }
 
-    def search_watchlist_by_notes(self, user_id: int, search_term: str) -> List[Watchlist]:
+    def search_watchlist_by_notes(self, id_user: int, search_term: str) -> List[Watchlist]:
         """Search user's watchlist by notes content"""
         query = (
             select(Watchlist)
             .where(
-                Watchlist.user_id == user_id,
+                Watchlist.id_user == id_user,
                 Watchlist.notes.contains(search_term)
             )
             .order_by(desc(Watchlist.id_watchlist))

@@ -29,11 +29,11 @@ def create_actor(actor: ActorCreate, session: Session = Depends(get_session)):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/", response_model=List[ActorRead])
-def get_actors(offset: int = 0, limit: int = Query(default=10, le=100), birth_year: int = Query(None, description="Filter actors by birth year"), session: Session = Depends(get_session)):
+def get_actors(offset: int = 0, limit: int = Query(default=10, le=100), session: Session = Depends(get_session)):
     """Get a list of actors"""
     try:
         crud = ActorCRUD(session)
-        return crud.get_actors(offset, limit, birth_year)
+        return crud.get_actors(offset, limit)
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
