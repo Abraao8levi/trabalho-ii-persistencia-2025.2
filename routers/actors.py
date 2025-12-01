@@ -110,11 +110,11 @@ def remove_movie_from_actor(actor_id: int, movie_id: int, session: Session = Dep
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.get("/search/{name}", response_model=List[ActorRead])
-def search_actors_by_name(name: str, session: Session = Depends(get_session)):
-    """Search actors by name"""
-    try:
-        crud = ActorCRUD(session)
-        return crud.search_actors_by_name(name)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+# @router.get("/search/{name}", response_model=List[ActorRead])
+# def search_actors_by_name(name: str, session: Session = Depends(get_session)):
+#     """Search actors by name"""
+#     try:
+#         crud = ActorCRUD(session)
+#         return crud.search_actors_by_name(name)
+#     except Exception:
+#         raise HTTPException(status_code=500, detail="Internal server error")
