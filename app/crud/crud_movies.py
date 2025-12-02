@@ -6,6 +6,7 @@ from models.models import Movie
 from app.schemas_models.movies import MovieCreate, MovieUpdate, MovieRead
 from app.schemas_models.actors import ActorRead
 from app.schemas_models.genres import GenreRead
+from app.schemas_models.reviews import ReviewRead
 from app.schemas_models.aggregations import MovieFullInfo
 from app.crud.exceptions import NotFoundException
 
@@ -83,5 +84,6 @@ def get_movie_full_info(db: Session, movie_id: int) -> MovieFullInfo:
         movie=MovieRead.model_validate(movie),
         actors=[ActorRead.model_validate(a) for a in movie.actors],
         genres=[GenreRead.model_validate(g) for g in movie.genres],
+        reviews=[ReviewRead.model_validate(r) for r in movie.reviews],
         review_count=len(movie.reviews)
     )

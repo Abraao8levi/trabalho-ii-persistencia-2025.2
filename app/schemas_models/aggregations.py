@@ -3,7 +3,7 @@ from typing import List
 from .movies import MovieRead
 from .actors import ActorRead
 from .genres import GenreRead
-
+from .reviews import ReviewRead
 
 class MovieStats(SQLModel):
     movie_id: int
@@ -24,4 +24,5 @@ class MovieFullInfo(SQLModel):
     movie: MovieRead
     actors: List[ActorRead]
     genres: List[GenreRead]
+    reviews: List[ReviewRead]
     review_count: int
